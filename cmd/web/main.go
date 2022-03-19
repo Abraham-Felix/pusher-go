@@ -2,16 +2,17 @@ package main
 
 import (
 	"encoding/gob"
-	"github.com/alexedwards/scs/v2"
-	"github.com/pusher/pusher-http-go"
-	"github.com/tsawler/vigilate/internal/config"
-	"github.com/tsawler/vigilate/internal/handlers"
-	"github.com/tsawler/vigilate/internal/models"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/pusher/pusher-http-go"
+	"github.com/tsawler/vigilate/internal/config"
+	"github.com/tsawler/vigilate/internal/handlers"
+	"github.com/tsawler/vigilate/internal/models"
 )
 
 var app config.AppConfig
@@ -59,11 +60,28 @@ func main() {
 		WriteTimeout:      5 * time.Second,
 	}
 
+	//newinsecurePort := ":4000"
+	newsrv := &http.Server{
+		Addr:              *insecurePort,
+		Handler:           routes(),
+		IdleTimeout:       30 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+	}
+
 	log.Printf("Starting HTTP server on port %s....", *insecurePort)
 
 	// start the server
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
+	}
+	go handlers.ListenToWsChannel()
+
+	// start the server
+	newerr := newsrv.ListenAndServe()
+	if newerr != nil {
+		log.Fatal(newerr)
 	}
 }

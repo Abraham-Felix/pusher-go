@@ -1,9 +1,10 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/tsawler/vigilate/internal/handlers"
-	"net/http"
 )
 
 func routes() http.Handler {
@@ -54,6 +55,12 @@ func routes() http.Handler {
 		mux.Get("/user/{id}", handlers.Repo.OneUser)
 		mux.Post("/user/{id}", handlers.Repo.PostOneUser)
 		mux.Get("/user/delete/{id}", handlers.Repo.DeleteUser)
+
+		//handlers
+		mux.Get("/home", handlers.Home)
+
+		//wsEndpoint
+		mux.Get("/ws", handlers.WsEndpoint)
 
 		// schedule
 		mux.Get("/schedule", handlers.Repo.ListEntries)
