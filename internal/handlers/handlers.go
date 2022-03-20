@@ -11,7 +11,6 @@ import (
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/websocket"
 	"github.com/tsawler/vigilate/internal/config"
 	"github.com/tsawler/vigilate/internal/driver"
 	"github.com/tsawler/vigilate/internal/helpers"
@@ -20,13 +19,11 @@ import (
 	"github.com/tsawler/vigilate/internal/repository/dbrepo"
 )
 
-var wsChan = make(chan WsPayload)
-
-var clients = make(map[WebSocketConnection]string)
-
 //Repo is the repository
 var Repo *DBRepo
 var app *config.AppConfig
+
+var clients = make(map[int]string)
 
 // DBRepo is the db repo
 type DBRepo struct {
@@ -76,136 +73,17 @@ func (repo *DBRepo) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 // Displays Home page, Admin Home
-func Home(w http.ResponseWriter, r *http.Request) {
+func (repo *DBRepo) Home(w http.ResponseWriter, r *http.Request) {
 
-	err := helpers.RenderPage(w, r, "home", nil, nil)
+	userID := repo.App.Session.GetInt(r.Context(), "userID")
+	u, _ := repo.DB.GetUserById(userID)
+
+	vars := make(jet.VarMap)
+	vars.Set("user", u)
+
+	err := helpers.RenderPage(w, r, "home", vars, nil)
 	if err != nil {
 		printTemplateError(w, err)
-	}
-}
-
-// WebSocketConnection is a wrapper for our websocket connection, in case
-// we ever need to put more data into the struct
-type WebSocketConnection struct {
-	*websocket.Conn
-}
-
-// WsJsonResponse defines the response sent back from websocket
-type WsJsonResponse struct {
-	Action         string   `json:"action"`
-	Message        string   `json:"message"`
-	MessageType    string   `json:"message_type"`
-	ConnectedUsers []string `json:"connected_users"`
-}
-
-// WsPayload defines the websocket request from the client
-type WsPayload struct {
-	Action   string              `json:"action"`
-	Username string              `json:"username"`
-	Message  string              `json:"message"`
-	Conn     WebSocketConnection `json:"-"`
-}
-
-// WsEndpoint upgrades connection to websocket
-func WsEndpoint(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgradeConnection.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Println("Client connected to endpoint")
-
-	var response WsJsonResponse
-	response.Message = `<em><small>Connected to server</small></em>`
-
-	conn := WebSocketConnection{Conn: ws}
-	clients[conn] = ""
-
-	err = ws.WriteJSON(response)
-	if err != nil {
-		log.Println(err)
-	}
-
-	go ListenForWs(&conn)
-}
-
-// ListenForWs is a goroutine that handles communication between server and client, and
-// feeds data into the wsChan
-func ListenForWs(conn *WebSocketConnection) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Error", fmt.Sprintf("%v", r))
-		}
-	}()
-
-	var payload WsPayload
-
-	for {
-		err := conn.ReadJSON(&payload)
-		if err != nil {
-			// do nothing
-		} else {
-			payload.Conn = *conn
-			wsChan <- payload
-		}
-	}
-}
-
-// ListenToWsChannel is a goroutine that waits for an entry on the wsChan, and handles it according to the
-// specified action
-func ListenToWsChannel() {
-	var response WsJsonResponse
-
-	for {
-		e := <-wsChan
-
-		switch e.Action {
-		case "username":
-			// get a list of all users and send it back via broadcast
-			clients[e.Conn] = e.Username
-			users := getUserList()
-			response.Action = "list_users"
-			response.ConnectedUsers = users
-			broadcastToAll(response)
-
-		case "left":
-			// handle the situation where a user leaves the page
-			response.Action = "list_users"
-			delete(clients, e.Conn)
-			users := getUserList()
-			response.ConnectedUsers = users
-			broadcastToAll(response)
-
-		case "broadcast":
-			response.Action = "broadcast"
-			response.Message = fmt.Sprintf("<strong>%s</strong>: %s", e.Username, e.Message)
-			broadcastToAll(response)
-		}
-	}
-}
-
-// getUserList returns a slice of strings containing all usernames who are currently online
-func getUserList() []string {
-	var userList []string
-	for _, x := range clients {
-		if x != "" {
-			userList = append(userList, x)
-		}
-	}
-	sort.Strings(userList)
-	return userList
-}
-
-// broadcastToAll sends ws response to all connected clients
-func broadcastToAll(response WsJsonResponse) {
-	for client := range clients {
-		err := client.WriteJSON(response)
-		if err != nil {
-			// the user probably left the page, or their connection dropped
-			log.Println("websocket err")
-			_ = client.Close()
-			delete(clients, client)
-		}
 	}
 }
 
@@ -323,13 +201,6 @@ func (repo *DBRepo) Host(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		printTemplateError(w, err)
 	}
-}
-
-// upgradeConnection is the websocket upgrader from gorilla/websockets
-var upgradeConnection = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 // PostHost handles posting of host form
@@ -516,7 +387,7 @@ func show500(w http.ResponseWriter, r *http.Request) {
 }
 
 func printTemplateError(w http.ResponseWriter, err error) {
-	_, _ = fmt.Fprint(w, fmt.Sprintf(`<small><span class='text-danger'>Error executing template: %s</span></small>`, err))
+	_, _ = fmt.Fprintf(w, fmt.Sprintf(`<small><span class='text-danger'>Error executing template: %s</span></small>`, err))
 }
 
 type serviceJSON struct {
@@ -583,6 +454,16 @@ func (repo *DBRepo) SetSystemPref(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 
+}
+
+// getUserList returns a slice of strings containing all usernames who are currently online
+func getUserList() []string {
+	var userList []string
+	for _, x := range clients {
+		userList = append(userList, x)
+	}
+	sort.Strings(userList)
+	return userList
 }
 
 // ToggleMonitoring turns monitoring on and off

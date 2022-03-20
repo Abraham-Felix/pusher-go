@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/pusher/pusher-http-go"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/pusher/pusher-http-go"
 )
 
 // PusherAuth authenticates the user to our pusher server
@@ -32,4 +33,5 @@ func (repo *DBRepo) PusherAuth(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(response)
+
 }

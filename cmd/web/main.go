@@ -60,9 +60,8 @@ func main() {
 		WriteTimeout:      5 * time.Second,
 	}
 
-	//newinsecurePort := ":4000"
 	newsrv := &http.Server{
-		Addr:              *insecurePort,
+		Addr:              ":4000",
 		Handler:           routes(),
 		IdleTimeout:       30 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -77,11 +76,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go handlers.ListenToWsChannel()
 
 	// start the server
 	newerr := newsrv.ListenAndServe()
 	if newerr != nil {
 		log.Fatal(newerr)
 	}
+
 }

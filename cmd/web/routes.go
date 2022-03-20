@@ -57,10 +57,11 @@ func routes() http.Handler {
 		mux.Get("/user/delete/{id}", handlers.Repo.DeleteUser)
 
 		//handlers
-		mux.Get("/home", handlers.Home)
+		mux.Get("/home", handlers.Repo.Home)
 
-		//wsEndpoint
-		mux.Get("/ws", handlers.WsEndpoint)
+		mux.Post("/home/ajax/new-message", handlers.Repo.NewMessage)
+		mux.Post("/home/ajax/add-user", handlers.Repo.AddChatUser)
+		//mux.Get("/home/ajax/remove-chatuser", handlers.Repo.RemoveChatUser)
 
 		// schedule
 		mux.Get("/schedule", handlers.Repo.ListEntries)
