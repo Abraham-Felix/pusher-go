@@ -22,8 +22,7 @@ import (
 //Repo is the repository
 var Repo *DBRepo
 var app *config.AppConfig
-
-var clients = make(map[int]string)
+var clients []string
 
 // DBRepo is the db repo
 type DBRepo struct {
@@ -457,13 +456,22 @@ func (repo *DBRepo) SetSystemPref(w http.ResponseWriter, r *http.Request) {
 }
 
 // getUserList returns a slice of strings containing all usernames who are currently online
-func getUserList() []string {
-	var userList []string
-	for _, x := range clients {
-		userList = append(userList, x)
+func getUserList(s string) []string {
+	found := Find(clients, s)
+	if !found {
+		clients = append(clients, s)
 	}
-	sort.Strings(userList)
-	return userList
+	sort.Strings(clients)
+	return clients
+}
+
+func Find(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
 
 // ToggleMonitoring turns monitoring on and off

@@ -93,6 +93,7 @@
 				ajax.responseType = "json";
 				ajax.open("POST", "/admin/home/ajax/new-message");
 				ajax.send(formData);
+                add_member(user);
 				document.getElementById("message").value ='';
       }
       else {
@@ -103,48 +104,37 @@
 
     publicChannel.bind("new-message", function (data) {
 
-			let outputExists = !!document.getElementById("output");
+        let outputExists = !!document.getElementById("output");
 
-			if (outputExists) {
-				o = document.getElementById("output")
-				o.innerHTML = o.innerHTML + data.username + ":  " + data.message +  "<br>";
-      }
+        if (outputExists) {
+            o = document.getElementById("output")
+            o.innerHTML = o.innerHTML + data.username + ":  " + data.message +  "<br>";
+        }
     })
 
-		publicChannel.bind("update-users", function (data) {
-
-		  let ul = document.getElementById("online_users");
-			while (ul.firstChild) ul.removeChild(ul.firstChild);
-        if (data.connected_users) {
-					data.connected_users.forEach(function (item) {
-							let li = document.createElement("li");
-							li.appendChild(document.createTextNode(item));
-							ul.appendChild(li);
-					})
+	publicChannel.bind("add-chat-user", function (data) {
+      debugger;
+      let ul = document.getElementById("online_users");
+        while (ul.firstChild) ul.removeChild(ul.firstChild);
+        if (data.length > 0) {
+            data.forEach(function (item) {
+                let li = document.createElement("li");
+                li.appendChild(document.createTextNode(item));
+                ul.appendChild(li);
+            })
         }
-	  })
+    })
 
 
-		let presenceChannel = pusher.subscribe("presence-online");
-		presenceChannel.bind("pusher:subscription_succeeded", function () {
-
-			presenceChannel.members.each(function (member) {
-  			var userId = member.id;
-  			var userName = member.info.name;
-				add_member(userId, userName)
-			});
-		})
-
-		function add_member(userId, userName) {
-			  let formData = new FormData();
-				formData.append("id", userId);
-				formData.append("name", userName);
-				formData.append("csrf_token", "{{.CSRFToken}}");
-				let ajax = new XMLHttpRequest();
-				ajax.responseType = "json";
-				ajax.open("POST", "/admin/home/ajax/add-user");
-				ajax.send(formData);
-		}
+	function add_member(userName) {
+        let formData = new FormData();
+        formData.append("name", userName);
+        formData.append("csrf_token", "{{.CSRFToken}}");
+        let ajax = new XMLHttpRequest();
+        ajax.responseType = "json";
+        ajax.open("POST", "/admin/home/ajax/add-user");
+        ajax.send(formData);
+	}
 
 </script>
 </body>

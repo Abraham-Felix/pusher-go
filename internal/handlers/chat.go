@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func (repo *DBRepo) NewMessage(w http.ResponseWriter, r *http.Request) {
@@ -20,14 +19,9 @@ func (repo *DBRepo) NewMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (repo *DBRepo) AddChatUser(w http.ResponseWriter, r *http.Request) {
-
-	id, _ := strconv.Atoi(r.PostForm.Get("id"))
 	userName := r.PostForm.Get("name")
-	clients[id] = userName
-	data := make(map[string][]string)
-	data["connect_users"] = getUserList()
-	fmt.Println(getUserList())
-	err := app.WsClient.Trigger("public-channel", "update-users", data)
+	data := getUserList(userName)
+	err := app.WsClient.Trigger("public-channel", "add-chat-user", data)
 	if err != nil {
 		log.Println(err)
 	}
