@@ -1,39 +1,25 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+{{extends "./layouts/layout.jet"}}
 
-    <link rel="css" type="text/css" href="https://unpkg.com/notie/dist/notie.min.css">
+{{block css()}}
+ <style>
+    .chatBox {
+        padding: 0.5em;
+        outline: 1px solid silver;
+        min-height: 150px;
+    }
+ </style>
+{{end}}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+{{block cardTitle()}}
+Chat
+{{end}}
 
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
-
-    <style>
-        .chatBox {
-            padding: 0.5em;
-            outline: 1px solid silver;
-            min-height: 150px;
-        }
-    </style>
-    <title>Home</title>
-</head>
-<body>
+{{block cardContent()}}
 <div class="container">
     <div class="row">
         <div class="col-md-8">
             <h1 class="mt-3">Home page</h1>
             <hr>
-
-            <p>
-                <a href="https://www.github.com">Go to Github</a>
-            </p>
 
             <div class="form-group">
                 <label for="username">Username:</label>
@@ -66,76 +52,8 @@
         </div>
     </div>
 </div>
+{{end}}
 
-<script src="/static/admin/js/pusher.min.js"></script>
+{{block js()}}
 
-<script>
-    let pusher = new Pusher("{{.PreferenceMap["pusher-key"]}}", {
-			authEndPoint: "/pusher/auth",
-			wsHost: "localhost",
-			wsPort: 4001,
-			forceTLS: false,
-			enabledTransports: ["ws", "wss"],
-			disabledTransports: []
-    });
-
-    function sendMessage() {
-
-			let msg = document.getElementById("message").value;
-			let user = document.getElementById("username").value;
-			let formData = new FormData();
-
-      if (msg != '') {
-				formData.append("message", msg);
-				formData.append("username", user);
-				formData.append("csrf_token", "{{.CSRFToken}}");
-				let ajax = new XMLHttpRequest();
-				ajax.responseType = "json";
-				ajax.open("POST", "/admin/home/ajax/new-message");
-				ajax.send(formData);
-                add_member(user);
-				document.getElementById("message").value ='';
-      }
-      else {
-        return;
-      }
-    }
-    let publicChannel = pusher.subscribe("public-channel");
-
-    publicChannel.bind("new-message", function (data) {
-
-        let outputExists = !!document.getElementById("output");
-
-        if (outputExists) {
-            o = document.getElementById("output")
-            o.innerHTML = o.innerHTML + data.username + ":  " + data.message +  "<br>";
-        }
-    })
-
-	publicChannel.bind("add-chat-user", function (data) {
-      debugger;
-      let ul = document.getElementById("online_users");
-        while (ul.firstChild) ul.removeChild(ul.firstChild);
-        if (data.length > 0) {
-            data.forEach(function (item) {
-                let li = document.createElement("li");
-                li.appendChild(document.createTextNode(item));
-                ul.appendChild(li);
-            })
-        }
-    })
-
-
-	function add_member(userName) {
-        let formData = new FormData();
-        formData.append("name", userName);
-        formData.append("csrf_token", "{{.CSRFToken}}");
-        let ajax = new XMLHttpRequest();
-        ajax.responseType = "json";
-        ajax.open("POST", "/admin/home/ajax/add-user");
-        ajax.send(formData);
-	}
-
-</script>
-</body>
-</html>
+{{end}}

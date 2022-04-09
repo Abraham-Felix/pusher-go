@@ -320,4 +320,57 @@
             }
         }
     }
+
+    function sendMessage() {
+        let msg = document.getElementById("message").value;
+        let user = document.getElementById("username").value;
+        let formData = new FormData();
+
+      if (msg != '') {
+				formData.append("message", msg);
+				formData.append("username", user);
+				formData.append("csrf_token", "{{.CSRFToken}}");
+				let ajax = new XMLHttpRequest();
+				ajax.responseType = "json";
+				ajax.open("POST", "/admin/home/ajax/new-message");
+				ajax.send(formData);
+                add_member(user);
+				document.getElementById("message").value ='';
+      }
+      else {
+        return;
+      }
+    }
+
+    publicChannel.bind("new-message", function (data) {
+
+        let outputExists = !!document.getElementById("output");
+
+        if (outputExists) {
+            o = document.getElementById("output")
+            o.innerHTML = o.innerHTML + data.username + ":  " + data.message +  "<br>";
+        }
+    })
+
+	publicChannel.bind("add-chat-user", function (data) {
+      let ul = document.getElementById("online_users");
+        while (ul.firstChild) ul.removeChild(ul.firstChild);
+        if (data.length > 0) {
+            data.forEach(function (item) {
+                let li = document.createElement("li");
+                li.appendChild(document.createTextNode(item));
+                ul.appendChild(li);
+            })
+        }
+    })
+
+	function add_member(userName) {
+        let formData = new FormData();
+        formData.append("name", userName);
+        formData.append("csrf_token", "{{.CSRFToken}}");
+        let ajax = new XMLHttpRequest();
+        ajax.responseType = "json";
+        ajax.open("POST", "/admin/home/ajax/add-user");
+        ajax.send(formData);
+	}
 </script>
