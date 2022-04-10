@@ -50,10 +50,26 @@ Chat
 
             </div>
         </div>
+         <div class="col-md-4">
+            <h1 class="mt-3">Private Message</h1>
+            <hr>
+            <div id="private">
+
+            </div>
+        </div>
     </div>
 </div>
 {{end}}
 
 {{block js()}}
 
+
+<script>
+publicChannel.bind("{{user.FirstName}} {{user.LastName}}", function (data) {
+
+        o = document.getElementById("private")
+        o.innerHTML = o.innerHTML + data.username + ":  " + data.message +  "<br>";
+    })
+
+</script>
 {{end}}

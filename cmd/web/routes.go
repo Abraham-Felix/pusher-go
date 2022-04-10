@@ -61,7 +61,7 @@ func routes() http.Handler {
 
 		mux.Post("/home/ajax/new-message", handlers.Repo.NewMessage)
 		mux.Post("/home/ajax/add-user", handlers.Repo.AddChatUser)
-		//mux.Get("/home/ajax/remove-chatuser", handlers.Repo.RemoveChatUser)
+		mux.Post("/home/ajax/personal", handlers.Repo.NewPersonalMessage)
 
 		// schedule
 		mux.Get("/schedule", handlers.Repo.ListEntries)

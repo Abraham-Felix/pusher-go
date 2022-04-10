@@ -26,3 +26,15 @@ func (repo *DBRepo) AddChatUser(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 }
+
+func (repo *DBRepo) NewPersonalMessage(w http.ResponseWriter, r *http.Request) {
+
+	data := make(map[string]string)
+	data["message"] = r.PostForm.Get("message")
+	data["username"] = r.PostForm.Get("sender")
+	fmt.Println(r.PostForm)
+	err := app.WsClient.Trigger("public-channel", r.PostForm.Get("receiver"), data)
+	if err != nil {
+		log.Println(err)
+	}
+}

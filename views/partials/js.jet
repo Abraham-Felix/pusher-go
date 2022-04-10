@@ -342,6 +342,9 @@
       }
     }
 
+    function sendPersonalMessage(user) {
+        chatPrompt(user)
+    }
     publicChannel.bind("new-message", function (data) {
 
         let outputExists = !!document.getElementById("output");
@@ -353,12 +356,17 @@
     })
 
 	publicChannel.bind("add-chat-user", function (data) {
+
       let ul = document.getElementById("online_users");
         while (ul.firstChild) ul.removeChild(ul.firstChild);
         if (data.length > 0) {
             data.forEach(function (item) {
                 let li = document.createElement("li");
-                li.appendChild(document.createTextNode(item));
+                let anchor = document.createElement('a');
+                let link = document.createTextNode(item);
+                anchor.appendChild(link);
+                anchor.href = "javascript:sendPersonalMessage(" + "'" + item + "'" + ")";
+                li.appendChild(anchor);
                 ul.appendChild(li);
             })
         }
@@ -373,4 +381,27 @@
         ajax.open("POST", "/admin/home/ajax/add-user");
         ajax.send(formData);
 	}
+
+    function chatPrompt(user) {
+
+           const {value: result} = Swal.fire({
+            title: 'Send a message to ' + user,
+            input: 'text',
+            inputValue:  '',
+            showCancelButton: true,
+            confirmButtonText: 'Send'
+        }).then((result) => {
+        if (result) {
+            let formData = new FormData();
+            formData.append("message", result.value)
+            formData.append("receiver", user);
+            formData.append("sender", document.getElementById("username").value );
+            formData.append("csrf_token", "{{.CSRFToken}}");
+            let ajax = new XMLHttpRequest();
+            ajax.responseType = "json";
+            ajax.open("POST", "/admin/home/ajax/personal");
+            ajax.send(formData);
+        }
+        })
+    }
 </script>
