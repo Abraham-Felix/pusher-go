@@ -151,12 +151,9 @@
         <footer class="footer">
             <div class="container-fluid">
                 <div class="row text-muted">
-                    <div class="col-6 text-left">
-                        <small class="text-muted">Version {{.PreferenceMap["version"]}}</small>
-                    </div>
                     <div class="col-6 text-right">
                         <p class="mb-0">
-                            <a href="/" class="text-muted"><strong><span class="fa fa-eye"></span> Vigilate</strong></a>
+                            <a href="/" class="text-muted"><strong>Fintech Picnic ...</strong></a>
                         </p>
                     </div>
                 </div>

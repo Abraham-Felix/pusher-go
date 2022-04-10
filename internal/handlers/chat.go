@@ -37,4 +37,19 @@ func (repo *DBRepo) NewPersonalMessage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	chanName := "s" + r.PostForm.Get("sender")
+	privateSendLog(r.PostForm.Get("message"), chanName, r.PostForm.Get("receiver"))
+}
+
+func privateSendLog(msg string, sender string, receiver string) {
+	data := make(map[string]string)
+	data["message"] = msg
+	data["username"] = receiver
+
+	err := app.WsClient.Trigger("public-channel", sender, data)
+	if err != nil {
+		log.Println(err)
+	}
+
 }

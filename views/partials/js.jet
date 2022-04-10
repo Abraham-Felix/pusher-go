@@ -1,6 +1,7 @@
 <script src="/static/admin/js/pusher.min.js"></script>
 
 <script>
+
     let pusher = new Pusher("{{.PreferenceMap["pusher-key"]}}", {
         authEndPoint: "/pusher/auth",
         wsHost: "localhost",
@@ -391,7 +392,7 @@
             showCancelButton: true,
             confirmButtonText: 'Send'
         }).then((result) => {
-        if (result) {
+        if (result.value !='' && result.value != undefined) {
             let formData = new FormData();
             formData.append("message", result.value)
             formData.append("receiver", user);
