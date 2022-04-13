@@ -84,6 +84,7 @@ func (repo *DBRepo) Home(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		printTemplateError(w, err)
 	}
+
 }
 
 // Events displays the events page
